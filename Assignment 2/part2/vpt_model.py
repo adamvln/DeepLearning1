@@ -59,6 +59,8 @@ class CustomCLIP(nn.Module):
     """Modified CLIP module to support prompting."""
     def __init__(self, args, dataset, template="This is a photo of {}"):
         super(CustomCLIP, self).__init__()
+        self.device = args.device
+        
         classnames = dataset.classes
 
         print(f"Loading CLIP (backbone: {args.arch})")
@@ -74,7 +76,13 @@ class CustomCLIP(nn.Module):
         pprint(prompts)
 
         #######################
-        # PUT YOUR CODE HERE  #
+        tokenized_prompts = clip.tokenize(prompts).to(self.device)
+
+        with torch.no_grad():
+            text_features = clip_model.encode_text(tokenized_prompts)
+        
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        
         #######################
 
         # TODO: Write code to compute text features.
@@ -85,7 +93,6 @@ class CustomCLIP(nn.Module):
         # - Return a tensor of shape (num_prompts, 512).
 
         # remove this line once you implement the function
-        raise NotImplementedError("Write the code to compute text features.")
 
         #######################
         # END OF YOUR CODE    #
@@ -105,7 +112,17 @@ class CustomCLIP(nn.Module):
         """Forward pass of the model."""
 
         #######################
-        # PUT YOUR CODE HERE  #
+        image = image.to(self.device)
+        out = self.prompt_learner.to(self.device)(image)
+
+        image_features = self.clip_model.encode_image(out)
+
+        image_features = image_features / image_features.norm(dim = -1, keepdim = True)
+
+        similarity = (100.0 * image_features @ self.text_features.T).softmax(dim = -1) * self.logit_scale
+
+        return similarity
+
         #######################
 
         # TODO: Implement the forward function. This is not exactly the same as
@@ -120,7 +137,6 @@ class CustomCLIP(nn.Module):
         # - Return logits of shape (num_classes,).
 
         # remove this line once you implement the function
-        raise NotImplementedError("Implement the model_inference function.")
 
         #######################
         # END OF YOUR CODE    #

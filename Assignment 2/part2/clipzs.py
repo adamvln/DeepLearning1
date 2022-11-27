@@ -28,7 +28,7 @@ from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torch.nn as nn
-from utils import AverageMeter, set_seed
+from utils import AverageMeter, set_seed, accuracy_fct
 
 
 DATASET = {"cifar10": CIFAR10, "cifar100": CIFAR100}
@@ -75,7 +75,7 @@ def parse_option():
 
     # input
     parser.add_argument(
-        "--prompt_template", type=str, default="This is a photo of a {}"
+        "--prompt_template", type=str, default="This is a photo of a {}."
     )
     parser.add_argument(
         "--class_names",
@@ -122,7 +122,7 @@ class ZeroshotCLIP(nn.Module):
         if args.device == "cpu":
             clip_model = clip_model.float()
 
-        prompts = [template.format(c.replace("_", " ")) for c in classnames]
+        prompts = [template.format(c) for c in classnames]
         print()
         print()
         print("List of prompts:")
@@ -132,8 +132,8 @@ class ZeroshotCLIP(nn.Module):
         text_features = self.precompute_text_features(clip_model, prompts, args.device)
 
         self.class_names = classnames
-        self.text_features = text_features
-        self.clip_model = clip_model
+        self.text_features = text_features.to(self.device)
+        self.clip_model = clip_model.to(self.device)
         self.logit_scale = self.clip_model.logit_scale.exp().detach()
 
     def precompute_text_features(self, clip_model, prompts, device):
@@ -152,7 +152,12 @@ class ZeroshotCLIP(nn.Module):
         """
 
         #######################
-        # PUT YOUR CODE HERE  #
+        tokenized_prompts = clip.tokenize(prompts).to(device)
+        
+        with torch.no_grad():
+            text_features = clip_model.encode_text(tokenized_prompts)
+            text_features /= text_features.norm(dim=-1, keepdim=True)
+        return text_features
         #######################
 
         # TODO: Implement the precompute_text_features function.
@@ -171,7 +176,6 @@ class ZeroshotCLIP(nn.Module):
         #   https://github.com/openai/CLIP#api
 
         # remove this line once you implement the function
-        raise NotImplementedError("Implement the precompute_text_features function.")
 
         #######################
         # END OF YOUR CODE    #
@@ -189,7 +193,17 @@ class ZeroshotCLIP(nn.Module):
         """
 
         #######################
-        # PUT YOUR CODE HERE  #
+        # image = image.unsqueeze(0)
+        image = image.to(self.device)
+
+        with torch.no_grad():
+            image_feature = self.clip_model.encode_image(image)
+        image_feature /= image_feature.norm(keepdim = True)
+
+        similarity = (100.0 * image_feature @ self.text_features.T) * self.logit_scale
+
+        return similarity
+
         #######################
 
         # TODO: Implement the model_inference function.
@@ -356,7 +370,18 @@ def main():
     print(f"Iterating over {args.split} set of {args.dataset}")
 
     #######################
-    # PUT YOUR CODE HERE  #
+    running_correct = 0
+    nb_images = 0
+    with torch.no_grad():
+        for batch_num, data in enumerate(loader):
+            images, labels = data
+            images = images.to(device)
+
+            pred = clipzs.model_inference(images)
+
+            acc = accuracy_fct(pred, labels)[0]/100
+            top1.update(acc, args.batch_size)
+
     #######################
 
     # TODO: Implement the inference loop
@@ -372,14 +397,13 @@ def main():
     # - You can use the model_inference method of the ZeroshotCLIP class to get the logits
 
     # you can remove the following line once you have implemented the inference loop
-    raise NotImplementedError("Implement the inference loop")
 
     #######################
     # END OF YOUR CODE    #
     #######################
 
     print(
-        f"Zero-shot CLIP top-1 accuracy on {args.dataset}/{args.split}: {top1.val*100}"
+        f"Zero-shot CLIP top-1 accuracy on {args.dataset}/{args.split}: {top1.avg*100}"
     )
 
 

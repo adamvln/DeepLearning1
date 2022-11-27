@@ -28,7 +28,7 @@ import time
 
 from tqdm import tqdm
 from vpt_model import CustomCLIP
-from utils import cosine_lr, AverageMeter, ProgressMeter, accuracy, save_checkpoint, set_seed
+from utils import cosine_lr, AverageMeter, ProgressMeter, accuracy_fct, save_checkpoint, set_seed
 from dataset import load_dataset, construct_dataloader
 
 
@@ -51,7 +51,6 @@ class Learner:
         self.test_loader = construct_dataloader(args, self.test_dataset)
 
         PROMPT_TEMPLATE = args.text_prompt_template
-
         print("Building custom CLIP")
         self.vpt = CustomCLIP(args, self.test_dataset, template=PROMPT_TEMPLATE)
 
@@ -61,13 +60,16 @@ class Learner:
 
         print("Turning off gradients in both the image and the text encoder")
         #######################
-        # PUT YOUR CODE HERE  #
+        for name, layer in self.vpt.named_parameters():
+            if "prompt_learner" in name:
+                layer.requires_grad = True
+            else : 
+                layer.requires_grad = False
         #######################
         # TODO: Turn off gradients in both the image and the text encoder
         # Note: You need to keep the visual prompt's parameters trainable
         # Hint: Check for "prompt_learner" in the parameters' names
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -85,7 +87,6 @@ class Learner:
         print("Number of prompt parameters: ", num_params)
 
         self.vpt.to(self.device)
-
         # Define criterion and optimizer
         self.optimizer = torch.optim.SGD(
             filter(lambda p: p.requires_grad, self.vpt.parameters()),
@@ -207,7 +208,21 @@ class Learner:
             self.scheduler(step)
 
             #######################
-            # PUT YOUR CODE HERE  #
+            self.optimizer.zero_grad()
+
+            images = images.to(self.device)
+            target = target.to(self.device)
+
+            output = self.vpt(images)
+            loss = self.criterion(output, target)
+            # with torch.autograd.set_detect_anomaly(True):
+            #     loss.backward(retain_graph = True)
+            # loss.requires_grad = True
+
+            loss.backward(retain_graph = True)
+
+            self.optimizer.step()
+
             #######################
 
             # TODO: Implement the training step for a single batch
@@ -220,7 +235,6 @@ class Learner:
             # - Perform a backward pass
             # - Update the parameters
 
-            raise NotImplementedError
             #######################
             # END OF YOUR CODE    #
             #######################
@@ -231,7 +245,7 @@ class Learner:
             )
 
             # Measure accuracy
-            acc1 = accuracy(output, target, topk=(1,))
+            acc1 = accuracy_fct(output, target, topk=(1,))
             losses.update(loss.item(), images.size(0))
             top1.update(acc1[0].item(), images.size(0))
 
@@ -275,7 +289,12 @@ class Learner:
             for i, (images, target) in enumerate(tqdm(loader)):
 
                 #######################
-                # PUT YOUR CODE HERE  #
+                images = images.to(self.device)
+                target = target.to(self.device)
+
+                output = self.vpt(images)
+
+                loss = self.criterion(output, target)
                 #######################
 
                 # TODO: Implement the evaluation step for a single batch
@@ -285,13 +304,12 @@ class Learner:
                 # - Forward pass (using self.vpt)
                 # - Compute the loss (using self.criterion)
 
-                raise NotImplementedError
                 #######################
                 # END OF YOUR CODE    #
                 #######################
 
                 # Measure accuracy and record loss
-                acc1 = accuracy(output, target, topk=(1,))
+                acc1 = accuracy_fct(output, target, topk=(1,))
                 losses.update(loss.item(), images.size(0))
                 top1_prompt.update(acc1[0].item(), images.size(0))
 

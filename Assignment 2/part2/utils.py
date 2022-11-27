@@ -82,7 +82,7 @@ def cosine_lr(optimizer, base_lr, warmup_length, steps):
     return _lr_adjuster
 
 
-def accuracy(output, target, topk=(1,)):
+def accuracy_fct(output, target, topk=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""
     with torch.no_grad():
         maxk = max(topk)

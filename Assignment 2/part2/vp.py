@@ -18,6 +18,9 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import argparse
+import os
+import random
 
 
 class PadPrompter(nn.Module):
@@ -27,29 +30,45 @@ class PadPrompter(nn.Module):
     """
     def __init__(self, args):
         super(PadPrompter, self).__init__()
-        pad_size = args.prompt_size
-        image_size = args.image_size
+        self.pad_size = args.prompt_size
+        self.image_size = args.image_size
 
         #######################
-        # PUT YOUR CODE HERE  #
-        #######################
+        self.device = args.device
 
+        self.pad_up = nn.Parameter(torch.randn((1,3,self.pad_size, self.image_size)), requires_grad = True)
+        self.pad_down = nn.Parameter(torch.randn((1,3,self.pad_size, self.image_size)), requires_grad = True)
+        self.pad_left = nn.Parameter(torch.randn((1,3,self.image_size - 2*self.pad_size, self.pad_size)), requires_grad = True)
+        self.pad_right = nn.Parameter(torch.randn((1,3,self.image_size - 2*self.pad_size, self.pad_size)), requires_grad = True)
+
+
+        #######################
+        
         # TODO: Define the padding as variables self.pad_left, self.pad_right, self.pad_up, self.pad_down
 
         # Hints:
         # - Each of these are parameters that we need to learn. So how would you define them in torch?
         # - See Fig 2(c) in the assignment to get a sense of how each of these should look like.
-        # - Shape of self.pad_up and self.pad_down should be (1, 3, pad_size, image_size)
+        # - Shape of self.pad_up and self.pad_down should be (1, 3, self.pad_size, image_size)
         # - See Fig 2.(g)/(h) and think about the shape of self.pad_left and self.pad_right
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
 
     def forward(self, x):
         #######################
-        # PUT YOUR CODE HERE  #
+        patch = torch.zeros((x.shape))
+        patch[:,:,0:self.pad_size, 0:self.image_size] = self.pad_up
+        patch[:,:,self.image_size - self.pad_size:self.image_size, 0:self.image_size] = self.pad_down
+        patch[:,:, self.pad_size:self.image_size - self.pad_size, 0:self.pad_size] = self.pad_left
+        patch[:,:, self.pad_size:self.image_size - self.pad_size, self.image_size - self.pad_size:self.image_size] = self.pad_right
+
+        x = x.to(self.device)
+        patch = patch.to(self.device)
+        return x + patch
+        
+
         #######################
         # TODO: For a given batch of images, add the prompt as a padding to the image.
 
@@ -58,7 +77,6 @@ class PadPrompter(nn.Module):
         # - It is always advisable to implement and then visualize if
         #   your prompter does what you expect it to do.
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -76,27 +94,37 @@ class FixedPatchPrompter(nn.Module):
         assert isinstance(args.prompt_size, int), "prompt_size must be an integer"
 
         #######################
-        # PUT YOUR CODE HERE  #
+        self.prompt_size = args.prompt_size
+        image_size = args.image_size
+        self.device = args.device
+        
+        self.patch = nn.Parameter(torch.randn((1,3,self.prompt_size, self.prompt_size)))
+
         #######################
         # TODO: Define the prompt parameters here. The prompt is basically a
         # patch (can define as self.patch) of size [prompt_size, prompt_size]
         # that is placed at the top-left corner of the image.
-
         # Hints:
         # - The size of patch needs to be [1, 3, prompt_size, prompt_size]
         #     (1 for the batch dimension)
         #     (3 for the RGB channels)
         # - You can define variable parameters using torch.nn.Parameter
         # - You can initialize the patch randomly in N(0, 1) using torch.randn
-
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
 
     def forward(self, x):
         #######################
-        # PUT YOUR CODE HERE  #
+        # for img in x:
+        #     img = img.unsqueeze(0)
+        #     img[0,:,0:self.prompt_size,0:self.prompt_size] += self.patch
+        
+        # out = x.clone().to(self.device)
+        patch = torch.zeros((x.shape))
+        patch[:,:,0:self.prompt_size, 0:self.prompt_size] = self.patch
+        
+        return x + patch.to(x.device)
         #######################
         # TODO: For a given batch of images, place the patch at the top-left
 
@@ -105,7 +133,6 @@ class FixedPatchPrompter(nn.Module):
         # - It is always advisable to implement and then visualize if
         #   your prompter does what you expect it to do.
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -123,7 +150,11 @@ class RandomPatchPrompter(nn.Module):
         assert isinstance(args.prompt_size, int), "prompt_size must be an integer"
 
         #######################
-        # PUT YOUR CODE HERE  #
+        self.prompt_size = args.prompt_size
+        self.image_size = args.image_size
+        self.device = args.device
+        
+        self.patch = nn.Parameter(torch.randn((1,3,self.prompt_size, self.prompt_size)))
         #######################
         # TODO: Define the prompt parameters here. The prompt is basically a
         # patch (can be defined as self.patch) of size [prompt_size, prompt_size]
@@ -136,14 +167,20 @@ class RandomPatchPrompter(nn.Module):
         # - You can define variable parameters using torch.nn.Parameter
         # - You can initialize the patch randomly in N(0, 1) using torch.randn
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
 
     def forward(self, x):
         #######################
-        # PUT YOUR CODE HERE  #
+        fp_i = np.random.randint(low = 0, high = self.image_size - self.prompt_size)
+        fp_j = np.random.randint(low = 0, high = self.image_size - self.prompt_size)
+
+        patch = torch.zeros((x.shape))
+        patch[:,:,fp_i:fp_i + self.prompt_size, fp_j:fp_j + self.prompt_size] = self.patch
+
+        
+        return x + patch.to(x.device)
         #######################
         # TODO: For a given batch of images, place the patch at the top-left
 
@@ -154,8 +191,6 @@ class RandomPatchPrompter(nn.Module):
         # - It is always advisable to implement and then visualize if
         #   your prompter does what you expect it to do.
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
-

@@ -19,7 +19,7 @@ import os
 import argparse
 import torch
 from learner import Learner
-
+from vpt_model import CustomCLIP
 
 def parse_option():
     parser = argparse.ArgumentParser("Visual Prompting for CLIP")
@@ -77,7 +77,7 @@ def parse_option():
 
     # dataset
     parser.add_argument("--root", type=str, default="./data", help="dataset")
-    parser.add_argument("--dataset", type=str, default="cifar100", help="dataset")
+    parser.add_argument("--dataset", type=str, default="cifar10", help="dataset")
     parser.add_argument("--image_size", type=int, default=224, help="image size")
     parser.add_argument(
         "--test_noise", default=False, action="store_true",
@@ -136,6 +136,7 @@ def parse_option():
 def main():
     args = parse_option()
     print(args)
+
     learn = Learner(args)
 
     if args.evaluate:
@@ -148,3 +149,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
