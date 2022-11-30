@@ -129,7 +129,7 @@ you can add Gaussian noise to the test set of each dataset and observe whether t
 2. Call robustness.py with the argument ``--test_noise`` to add noise to the test set’s images, and the argument ``--resume`` to load the best performant checkpoint as:
 
 ```
-python robustness.py --dataset {cifar10/cifar100} --resume ./{path_to_checkpoint_folder}/model_best.pth.tar --evaluate --test_noise
+python robustness.py --dataset {cifar10} --resume ./{Assignment 2\part2\save\models\fixed_patch_1_cifar10_clip_ViT-B}/model_best.pth.tar --evaluate --test_noise
 ```
 
 You also can evaluate your model performance on without noise with:

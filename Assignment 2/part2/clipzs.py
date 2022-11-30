@@ -75,13 +75,13 @@ def parse_option():
 
     # input
     parser.add_argument(
-        "--prompt_template", type=str, default="This is a photo of a {}."
+        "--prompt_template", type=str, default="This is created by {}."
     )
     parser.add_argument(
         "--class_names",
         nargs="+",
         type=str,
-        default=None,
+        default=["human", "nature"],
         help="(space separated) labels to use for the prompts; defaults to all classes in the dataset",
         # e.g. --class_names red blue green
     )
@@ -89,7 +89,7 @@ def parse_option():
     # visualization
     parser.add_argument(
         "--visualize_predictions",
-        default=False,
+        default=True,
         action="store_true",
         help="whether to visualize the predictions of the first batch",
     )

@@ -30,11 +30,11 @@ class AddGaussianNoise(torch.nn.Module):
 
     def __call__(self, img):
         #######################
-        z = torch.randn((img.shape))
-        z = ((self.std)**2) * z + self.mean
-        img = z + img
+        # z = torch.randn((img.shape))
+        # z = ((self.std)**2) * z + self.mean
+        # img = z + img
         #######################
-
+        return img + torch.normal(self.mean, self.std, size = img.shape)
         # TODO: Given a batch of images, add Gaussian noise to each image.
 
         # Hints:

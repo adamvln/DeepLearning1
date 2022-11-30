@@ -59,7 +59,7 @@ def parse_option():
     parser.add_argument(
         "--method",
         type=str,
-        default="padding",
+        default="random_patch",
         choices=[
             "padding",
             "random_patch",
@@ -68,7 +68,7 @@ def parse_option():
         help="choose visual prompting method",
     )
     parser.add_argument(
-        "--prompt_size", type=int, default=30, help="size for visual prompts"
+        "--prompt_size", type=int, default=1, help="size for visual prompts"
     )
     parser.add_argument(
         "--text_prompt_template",
@@ -78,7 +78,7 @@ def parse_option():
 
     # dataset
     parser.add_argument("--root", type=str, default="./data", help="dataset")
-    parser.add_argument("--dataset", type=str, default="cifar100", help="dataset")
+    parser.add_argument("--dataset", type=str, default="cifar10", help="dataset")
     parser.add_argument("--image_size", type=int, default=224, help="image size")
     parser.add_argument(
         "--test_noise",
@@ -106,10 +106,10 @@ def parse_option():
     parser.add_argument("--filename", type=str, default=None, help="filename to save")
     parser.add_argument("--trial", type=int, default=1, help="number of trials")
     parser.add_argument(
-        "--resume", type=str, default=None, help="path to resume from checkpoint"
+        "--resume", type=str, default="models/random_patch_1_cifar10_clip_ViT-B/32_sgd_lr_40_decay_0_bsz_128_warmup_1000_trial_1/model_best.pth.tar", help="path to resume from checkpoint"
     )
     parser.add_argument(
-        "--evaluate", default=False, action="store_true", help="evaluate model test set"
+        "--evaluate", default=True, action="store_true", help="evaluate model test set"
     )
     parser.add_argument("--gpu", type=int, default=None, help="gpu to use")
     parser.add_argument(
@@ -176,12 +176,10 @@ def main():
         #######################
         # TODO: Define `classnames` as a list of 10 + 100 class labels from CIFAR10 and CIFAR100
 
-        raise NotImplementedError
+        classnames = cifar10_test.classes + cifar100_test.classes
         #######################
         # END OF YOUR CODE    #
         #######################
-
-        classnames = cifar10_test.classes + cifar100_test.classes
 
         # 5. Load the clip model
         print(f"Loading CLIP (backbone: {args.arch})")
@@ -203,8 +201,12 @@ def main():
         #######################
         # TODO: Compute the text features (for each of the prompts defined above) using CLIP
         # Note: This is similar to the code you wrote in `clipzs.py`
-
-        raise NotImplementedError
+        tokenized_prompts = clip.tokenize(prompts).to(args.device)
+        
+        with torch.no_grad():
+            text_features = clip_model.encode_text(tokenized_prompts)
+        
+        text_features /= text_features.norm(dim=-1, keepdim=True)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -219,8 +221,8 @@ def main():
         # TODO: Add an offset of 10 to the targets of CIFAR100
         # That is, if a class in CIFAR100 corresponded to '4', it should now correspond to '14'
         # Set the result of this to the attribute cifar100_test.targets to override them
-
-        raise NotImplementedError
+        for i in cifar100_test.targets:
+            i += 10
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -249,16 +251,16 @@ def main():
         #######################
         # TODO: Compute the weighted average of the above two accuracies
 
+        accuracy_all = (acc_cifar10 * len(cifar10_test) + acc_cifar100 * len(cifar100_test))/(len(cifar100_test) + len(cifar10_test))
         # Hint:
         # - accurary_all = acc_cifar10 * (% of cifar10 samples) \
         #                  + acc_cifar100 * (% of cifar100 samples)
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
 
-        print(f"TOP1 Accuracy on cifra10 + cifar100 is: {accuracy_all}")
+        print(f"TOP1 Accuracy on cifar10 + cifar100 is: {accuracy_all}")
         exit()
     else:
         raise ValueError("Enable flag --evaluate!")

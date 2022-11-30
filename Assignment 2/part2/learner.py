@@ -289,12 +289,7 @@ class Learner:
             for i, (images, target) in enumerate(tqdm(loader)):
 
                 #######################
-                images = images.to(self.device)
-                target = target.to(self.device)
 
-                output = self.vpt(images)
-
-                loss = self.criterion(output, target)
                 #######################
 
                 # TODO: Implement the evaluation step for a single batch
@@ -303,6 +298,13 @@ class Learner:
                 # - Move the images/targets to the device
                 # - Forward pass (using self.vpt)
                 # - Compute the loss (using self.criterion)
+
+                images = images.to(self.device)
+                target = target.to(self.device)
+
+                output = self.vpt(images)
+
+                loss = self.criterion(output, target)
 
                 #######################
                 # END OF YOUR CODE    #

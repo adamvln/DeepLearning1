@@ -194,3 +194,4 @@ class RandomPatchPrompter(nn.Module):
         #######################
         # END OF YOUR CODE    #
         #######################
+

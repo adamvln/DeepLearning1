@@ -55,7 +55,7 @@ def parse_option():
     parser.add_argument(
         "--method",
         type=str,
-        default="padding",
+        default="random_patch",
         choices=[
             "padding",
             "random_patch",
@@ -64,7 +64,7 @@ def parse_option():
         help="choose visual prompting method",
     )
     parser.add_argument(
-        "--prompt_size", type=int, default=30, help="size for visual prompts"
+        "--prompt_size", type=int, default=1, help="size for visual prompts"
     )
     parser.add_argument(
         "--text_prompt_template",
@@ -74,11 +74,11 @@ def parse_option():
 
     # dataset
     parser.add_argument("--root", type=str, default="./data", help="dataset")
-    parser.add_argument("--dataset", type=str, default="cifar100", help="dataset")
+    parser.add_argument("--dataset", type=str, default="cifar10", help="dataset")
     parser.add_argument("--image_size", type=int, default=224, help="image size")
     parser.add_argument(
         "--test_noise",
-        default=False,
+        default=True,
         action="store_true",
         help="whether to add noise to the test images",
     )
@@ -102,10 +102,10 @@ def parse_option():
     parser.add_argument("--filename", type=str, default=None, help="filename to save")
     parser.add_argument("--trial", type=int, default=1, help="number of trials")
     parser.add_argument(
-        "--resume", type=str, default=None, help="path to resume from checkpoint"
+        "--resume", type=str, default="models/random_patch_1_cifar10_clip_ViT-B/32_sgd_lr_40_decay_0_bsz_128_warmup_1000_trial_1/model_best.pth.tar", help="path to resume from checkpoint"
     )
     parser.add_argument(
-        "--evaluate", default=False, action="store_true", help="evaluate model test set"
+        "--evaluate", default=True, action="store_true", help="evaluate model test set"
     )
     parser.add_argument("--gpu", type=int, default=None, help="gpu to use")
     parser.add_argument(

@@ -31,7 +31,7 @@ def parse_option():
         "--num_workers", type=int, default=16, help="num of workers to use"
     )
     parser.add_argument(
-        "--epochs", type=int, default=1000, help="number of training epochs"
+        "--epochs", type=int, default=20, help="number of training epochs"
     )
     parser.add_argument(
         "--square_size",
@@ -64,7 +64,7 @@ def parse_option():
         help="choose visual prompting method",
     )
     parser.add_argument(
-        "--prompt_size", type=int, default=30, help="size for visual prompts"
+        "--prompt_size", type=int, default=1, help="size for visual prompts"
     )
     parser.add_argument(
         "--text_prompt_template", type=str, default="This is a photo of a {}",
@@ -77,7 +77,7 @@ def parse_option():
 
     # dataset
     parser.add_argument("--root", type=str, default="./data", help="dataset")
-    parser.add_argument("--dataset", type=str, default="cifar10", help="dataset")
+    parser.add_argument("--dataset", type=str, default="cifar100", help="dataset")
     parser.add_argument("--image_size", type=int, default=224, help="image size")
     parser.add_argument(
         "--test_noise", default=False, action="store_true",
