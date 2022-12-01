@@ -200,7 +200,7 @@ class ZeroshotCLIP(nn.Module):
             image_feature = self.clip_model.encode_image(image)
         image_feature /= image_feature.norm(keepdim = True)
 
-        similarity = (100.0 * image_feature @ self.text_features.T) * self.logit_scale
+        similarity = (image_feature @ self.text_features.T) * self.logit_scale
 
         return similarity
 
