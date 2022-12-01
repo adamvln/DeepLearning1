@@ -59,7 +59,7 @@ def parse_option():
     parser.add_argument(
         "--method",
         type=str,
-        default="random_patch",
+        default="fixed_patch",
         choices=[
             "padding",
             "random_patch",
@@ -78,7 +78,7 @@ def parse_option():
 
     # dataset
     parser.add_argument("--root", type=str, default="./data", help="dataset")
-    parser.add_argument("--dataset", type=str, default="cifar10", help="dataset")
+    parser.add_argument("--dataset", type=str, default="cifar100", help="dataset")
     parser.add_argument("--image_size", type=int, default=224, help="image size")
     parser.add_argument(
         "--test_noise",
@@ -106,7 +106,7 @@ def parse_option():
     parser.add_argument("--filename", type=str, default=None, help="filename to save")
     parser.add_argument("--trial", type=int, default=1, help="number of trials")
     parser.add_argument(
-        "--resume", type=str, default="models/random_patch_1_cifar10_clip_ViT-B/32_sgd_lr_40_decay_0_bsz_128_warmup_1000_trial_1/model_best.pth.tar", help="path to resume from checkpoint"
+        "--resume", type=str, default="models/fixed_patch_1_cifar10_clip_ViT-B/32_sgd_lr_40_decay_0_bsz_128_warmup_1000_trial_1/model_best.pth.tar", help="path to resume from checkpoint"
     )
     parser.add_argument(
         "--evaluate", default=True, action="store_true", help="evaluate model test set"
@@ -221,8 +221,7 @@ def main():
         # TODO: Add an offset of 10 to the targets of CIFAR100
         # That is, if a class in CIFAR100 corresponded to '4', it should now correspond to '14'
         # Set the result of this to the attribute cifar100_test.targets to override them
-        for i in cifar100_test.targets:
-            i += 10
+        cifar100_test.targets = [i + 10 for i in cifar100_test.targets]
         #######################
         # END OF YOUR CODE    #
         #######################
